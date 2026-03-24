@@ -33,9 +33,9 @@ import (
 
 const (
 	nudeImgSize = 320
-	// defaultNudeThreshold is the fixed detection confidence threshold.
-	// Not configurable — always 0.6 to reduce false positives.
-	//defaultNudeThreshold = float32(0.6)
+	// defaultNudeThreshold is the detection confidence threshold.
+	// Current value is 0.1 (permissive, suitable for development/testing).
+	// For production use, 0.6 is recommended to reduce false positives.
 	defaultNudeThreshold = float32(0.1)
 
 	// ONNX tensor names (verified from model introspection)
@@ -88,7 +88,6 @@ type NudeDetection struct {
 //	modelPath : path to detector_v2_default_checkpoint.onnx
 //	libPath   : ONNX Runtime shared library path (empty = system default)
 //
-// Detection threshold is fixed at 0.6 (not configurable).
 // Safe to call after Init() (OpenNSFW2) — ONNX environment re-init is a no-op.
 func InitNudeNet(modelPath, libPath string) error {
 	logger.Debug("NudeNet v2 Init — model=%s lib=%q threshold=%.2f", modelPath, libPath, defaultNudeThreshold)
@@ -238,7 +237,7 @@ func fillNudeTensor(data []float32, img image.Image) {
 			srcY := b.Min.Y + y*srcH/nudeImgSize
 			r, g, bv, _ := img.At(srcX, srcY).RGBA()
 			// BGR order (OpenCV), raw 0-255 (no /255.0)
-			data[idx] = float32(bv >> 8) // B
+			data[idx]   = float32(bv >> 8) // B
 			data[idx+1] = float32(g >> 8)  // G
 			data[idx+2] = float32(r >> 8)  // R
 			idx += 3

@@ -18,7 +18,8 @@ const videoFrameCount = 5
 // videoExts contains file extensions recognized as video.
 var videoExts = map[string]bool{
 	".mp4": true, ".webm": true, ".mov": true,
-	".avi": true, ".mkv": true,
+	".avi": true, ".mkv": true, ".ts": true,
+	".flv": true, ".wmv": true, ".m4v": true,
 }
 
 // isVideoFile reports whether path has a recognized video extension.

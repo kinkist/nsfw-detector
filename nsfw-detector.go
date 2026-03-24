@@ -59,19 +59,24 @@ func (r *Result) IsNSFW(threshold float32) bool {
 }
 
 // String returns a human-readable summary of the result.
+//
+// Detections == nil means NudeNet was not run.
+// Detections != nil (including empty slice) means NudeNet ran.
 func (r *Result) String() string {
 	var sb strings.Builder
 	if r.SFW != 0 || r.NSFW != 0 {
 		fmt.Fprintf(&sb, "SFW:  %.4f\nNSFW: %.4f\n", r.SFW, r.NSFW)
 	}
-	if r.Detections == nil && nudeEnabled {
-		sb.WriteString("NUDENET: (none above threshold)\n")
-	} else if len(r.Detections) > 0 {
-		sb.WriteString("NUDENET:")
-		for _, d := range r.Detections {
-			fmt.Fprintf(&sb, " %s:%.4f", d.Class, d.Score)
+	if r.Detections != nil {
+		if len(r.Detections) == 0 {
+			sb.WriteString("NUDENET: (none above threshold)\n")
+		} else {
+			sb.WriteString("NUDENET:")
+			for _, d := range r.Detections {
+				fmt.Fprintf(&sb, " %s:%.4f", d.Class, d.Score)
+			}
+			sb.WriteByte('\n')
 		}
-		sb.WriteByte('\n')
 	}
 	return sb.String()
 }
@@ -111,6 +116,10 @@ func DetectImage(imagePath string) (*Result, error) {
 		if err != nil {
 			return nil, fmt.Errorf("NudeNet v2: %w", err)
 		}
+		// Use empty non-nil slice to distinguish "ran but found nothing" from "not run".
+		if dets == nil {
+			dets = []NudeDetection{}
+		}
 		result.Detections = dets
 	}
 
@@ -139,6 +148,9 @@ func DetectVideo(videoPath string) (*Result, error) {
 		dets, err := detectVideoNudeNet(videoPath)
 		if err != nil {
 			return nil, fmt.Errorf("NudeNet v2 video: %w", err)
+		}
+		if dets == nil {
+			dets = []NudeDetection{}
 		}
 		result.Detections = dets
 	}
